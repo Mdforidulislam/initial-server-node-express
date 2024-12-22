@@ -11,7 +11,7 @@ const generateAccessToken = (user) => {
     return jsonwebtoken_1.default.sign({ user_Name: user.user_name, user_role: user.user_role, user_email: user.user_email }, config_1.default.SECRECT_KEY, { expiresIn: "3d" });
 };
 const generateRefreshToken = (user) => {
-    return jsonwebtoken_1.default.sign({ user_name: user.user_name, user_eole: user.user_role, user_email: user.user_email }, config_1.default.SECRECT_KEY, { expiresIn: "7d" });
+    return jsonwebtoken_1.default.sign({ user_name: user.user_name, user_role: user.user_role, user_email: user.user_email }, config_1.default.SECRECT_KEY, { expiresIn: "7d" });
 };
 // login User Service 
 const authticationService = async (usernameOrEmail, password) => {

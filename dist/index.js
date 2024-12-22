@@ -5,21 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const app_1 = __importDefault(require("./app"));
-// import http from 'http';
-// import { Server } from 'socket.io';
 const config_1 = __importDefault(require("./config"));
-const tampMail_routes_1 = require("./modules/tempMail/tampMail.routes");
-// import setupSocket from "./message/messageSoket";
-// export const serverSocket = http.createServer(app);
-// // Initialize Socket.IO with CORS configuration
-// const io = new Server(serverSocket, {
-//     cors: {
-//         origin: "*",  
-//         methods: ["GET", "POST"],
-//     },
-//   });
-//   setupSocket(io);
-(0, tampMail_routes_1.createAndLogin)();
 async function main() {
     try {
         await mongoose_1.default.connect(config_1.default.database_url);

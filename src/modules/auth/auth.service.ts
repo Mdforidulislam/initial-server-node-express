@@ -19,7 +19,7 @@ const generateAccessToken = (user: any): string => {
 
 const generateRefreshToken = (user: any): string => {
     return jwt.sign(
-        { user_name: user.user_name, user_eole: user.user_role, user_email: user.user_email },
+        { user_name: user.user_name, user_role: user.user_role, user_email: user.user_email },
         config.SECRECT_KEY as string,  
         { expiresIn: "7d" }
     );

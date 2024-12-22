@@ -12,6 +12,7 @@ const express_async_handler_1 = __importDefault(require("express-async-handler")
 const createUser = (0, express_async_handler_1.default)(async (req, res) => {
     try {
         const { user } = req.body;
+        console.log(user);
         const result = await user_service_1.userService.userCreateDB(user);
         res.status(200).json({
             message: "Successfully Get Data",
@@ -36,7 +37,8 @@ exports.userGet = (0, express_async_handler_1.default)(async (req, res) => {
         const decoded = jsonwebtoken_1.default.verify(token, config_1.default.SECRECT_KEY);
         console.log("Decoded token:", decoded);
         // Check if the decoded token has a user_name property and that it is a string
-        const userId = decoded.user_Name;
+        const userId = decoded.user_name;
+        console.log("first", userId);
         if (typeof userId !== "string") {
             res.status(400).json({ error: "User ID is required" });
             return;
@@ -56,22 +58,30 @@ exports.userGet = (0, express_async_handler_1.default)(async (req, res) => {
 // geting all user 
 const getingAllUser = (0, express_async_handler_1.default)(async (req, res) => {
     try {
-        const token = req.headers.authorization;
-        console.log("Token:", token);
-        if (!token) {
+        const authHeader = req.headers.authorization;
+        // Check if Authorization header is present
+        if (!authHeader) {
             res.status(401).json({ error: "Unauthorized: No token provided" });
             return;
         }
-        const decoded = jsonwebtoken_1.default.verify(token, config_1.default.SECRECT_KEY);
-        console.log("Decoded token:", decoded);
-        // Check if the decoded token has a user_name property and that it is a string
-        const userId = decoded.user_Name;
-        const user_role = decoded.user_role;
-        if (typeof userId !== "string") {
-            res.status(400).json({ error: "User ID is required" });
+        // Extract token after 'Bearer '
+        const token = authHeader.split(" ")[1];
+        if (!token) {
+            res.status(401).json({ error: "Unauthorized: Malformed token" });
             return;
         }
-        const user = await user_service_1.userService.getingAllUser(userId, user_role);
+        // Verify the token
+        const decoded = jsonwebtoken_1.default.verify(token, config_1.default.SECRECT_KEY);
+        console.log("Decoded token:", decoded);
+        const userId = decoded.user_name;
+        const userRole = decoded.user_role;
+        console.log(userId, userRole, 'check therole ');
+        if (typeof userId !== "string" || typeof userRole !== "string") {
+            res.status(400).json({ error: "Invalid token payload" });
+            return;
+        }
+        // Fetch user details
+        const user = await user_service_1.userService.getingAllUser(userId, userRole);
         if (!user) {
             res.status(404).json({ error: "User not found" });
             return;
@@ -79,8 +89,13 @@ const getingAllUser = (0, express_async_handler_1.default)(async (req, res) => {
         res.status(200).json(user);
     }
     catch (error) {
-        console.error("Error fetching user:", error);
-        res.status(500).json({ error: "Internal server error" });
+        if (error.name === "TokenExpiredError") {
+            res.status(401).json({ error: "Unauthorized: Token has expired" });
+        }
+        else {
+            console.error("JWT Verification Error:", error);
+            res.status(401).json({ error: "Unauthorized: Invalid token" });
+        }
     }
 });
 exports.userControllers = {

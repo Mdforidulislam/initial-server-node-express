@@ -9,6 +9,7 @@ const createUser = expressAsyncHandler(async (req: Request, res: Response) => {
     try {
 
         const {user} = req.body;
+        console.log(user)
         const result = await userService.userCreateDB(user);
         res.status(200).json({ 
             message: "Successfully Get Data",
@@ -37,7 +38,8 @@ export const userGet = expressAsyncHandler(async (req: Request, res: Response): 
         console.log("Decoded token:", decoded);
 
         // Check if the decoded token has a user_name property and that it is a string
-        const userId = decoded.user_Name;
+        const userId = decoded.user_name;
+        console.log("first",userId)
         if (typeof userId !== "string") {
             res.status(400).json({ error: "User ID is required" });
             return;
@@ -58,39 +60,55 @@ export const userGet = expressAsyncHandler(async (req: Request, res: Response): 
 
 // geting all user 
 
-const getingAllUser = expressAsyncHandler(async(req:Request, res: Response): Promise<void> =>{
+const getingAllUser = expressAsyncHandler(async (req: Request, res: Response): Promise<void> => {
     try {
-        const token = req.headers.authorization 
-        console.log("Token:", token);
-        
-        if (!token) {
+        const authHeader = req.headers.authorization;
+
+        // Check if Authorization header is present
+        if (!authHeader) {
             res.status(401).json({ error: "Unauthorized: No token provided" });
             return;
         }
 
-        const decoded = jwt.verify(token, config.SECRECT_KEY as string) as JwtPayload & { user_name?: string };
-        console.log("Decoded token:", decoded);
-
-        // Check if the decoded token has a user_name property and that it is a string
-        const userId = decoded.user_Name;
-        const user_role = decoded.user_role;
-        if (typeof userId !== "string") {
-            res.status(400).json({ error: "User ID is required" });
+        // Extract token after 'Bearer '
+        const token = authHeader.split(" ")[1];
+        if (!token) {
+            res.status(401).json({ error: "Unauthorized: Malformed token" });
             return;
         }
 
-        const user = await userService.getingAllUser(userId,user_role);
+        // Verify the token
+        const decoded = jwt.verify(token, config.SECRECT_KEY as string) as JwtPayload & { user_name?: string; user_role?: string };
+
+        console.log("Decoded token:", decoded);
+
+        const userId = decoded.user_name;
+        const userRole = decoded.user_role;
+
+        console.log(userId,userRole,'check therole ')
+
+        if (typeof userId !== "string" || typeof userRole !== "string") {
+            res.status(400).json({ error: "Invalid token payload" });
+            return;
+        }
+
+        // Fetch user details
+        const user = await userService.getingAllUser(userId, userRole);
         if (!user) {
             res.status(404).json({ error: "User not found" });
             return;
         }
 
         res.status(200).json(user);
-    } catch (error) {
-        console.error("Error fetching user:", error);
-        res.status(500).json({ error: "Internal server error" });
+    } catch (error: any) {
+        if (error.name === "TokenExpiredError") {
+            res.status(401).json({ error: "Unauthorized: Token has expired" });
+        } else {
+            console.error("JWT Verification Error:", error);
+            res.status(401).json({ error: "Unauthorized: Invalid token" });
+        }
     }
-})
+});
 
 
 export const userControllers = {
